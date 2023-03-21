@@ -5,6 +5,10 @@ const routes = require('./router/friends.js')
 
 let users = []
 
+
+// defining a utility function used to see if a username exists 
+// in the list of registered users, to avoid duplications and 
+// keep each username unique
 const doesExist = (username)=>{
   let userswithsamename = users.filter((user)=>{
     return user.username === username
@@ -16,6 +20,10 @@ const doesExist = (username)=>{
   }
 }
 
+// another utility function that checks if the username and 
+// password match what is in the list of registered users. 
+// It returns a boolean depending on whether the credentials 
+// match or not
 const authenticatedUser = (username,password)=>{
   let validusers = users.filter((user)=>{
     return (user.username === username && user.password === password)
@@ -29,10 +37,16 @@ const authenticatedUser = (username,password)=>{
 
 const app = express();
 
+// we create and use a session object with user-defined secret, 
+// as a middleware to intercept the requests and ensure that 
+// the session is valid before processing a request.
 app.use(session({secret:"fingerpint"},resave=true,saveUninitialized=true));
 
 app.use(express.json());
 
+// ensure that all operations restricted to auhtenticated users
+// are intercepted by the middleware, i.e., endpoints starting 
+//with /friends go through the middleware.
 app.use("/friends", function auth(req,res,next){
    if(req.session.authorization) {
        token = req.session.authorization['accessToken'];
@@ -50,6 +64,12 @@ app.use("/friends", function auth(req,res,next){
     }
 });
 
+// To provide an endpoint for the registered users to login
+// Return an error if the username or password is not provided
+// Implement an access token that is valid for 1 hour 
+// (60 X 60 seconds) and logs the user in, if the credentials 
+// are correct.
+// Throw an error, if the credentials are incorrect.
 app.post("/login", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
@@ -72,6 +92,11 @@ app.post("/login", (req,res) => {
   }
 });
 
+// To give access to the API endpoints only to the authenticated 
+// users, we provide a way to register the users. This endpoint 
+// is a post request that accepts username and password through 
+// the body. Users do not have to be authenticated to access 
+// this endpoint.
 app.post("/register", (req,res) => {
   const username = req.body.username;
   const password = req.body.password;
